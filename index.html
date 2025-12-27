@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>NutriCare Pro | Science & Kindness</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --sage: #4a7c59; --light-mint: #f0f7f4; }
+        body { background-color: var(--light-mint); font-family: 'Segoe UI', sans-serif; }
+        .hero { background: var(--sage); color: white; padding: 40px 0; border-radius: 0 0 40px 40px; }
+        .card { border: none; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .warm-box { background: #fffde7; border-left: 5px solid #ffd600; padding: 15px; border-radius: 12px; font-style: italic; }
+        .stat-val { font-size: 2rem; font-weight: 800; color: var(--sage); }
+        .btn-main { background: var(--sage); color: white; border-radius: 12px; font-weight: bold; border: none; padding: 12px; }
+        .btn-main:hover { background: #355e42; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="hero text-center shadow mb-5">
+    <h1 class="fw-bold">NutriCare Assistant</h1>
+    <p>Scientific Tracking with a Warm Heart ❤️</p>
+</div>
+
+<div class="container">
+    {% if error %}<div class="alert alert-danger rounded-3">{{ error }}</div>{% endif %}
+
+    <form method="POST" action="/analyze">
+    <div class="row g-4">
+        <!-- 1. Profile -->
+        <div class="col-lg-4">
+            <div class="card p-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold">1. Health Profile</h5>
+                    {% if profile.weight %}<a href="/reset" class="btn btn-sm btn-outline-danger">Reset</a>{% endif %}
+                </div>
+                
+                {% if not profile.weight %}
+                <div class="row g-3">
+                    <div class="col-6"><label class="small">Age</label><input type="number" name="age" class="form-control" required></div>
+                    <div class="col-6"><label class="small">Gender</label><select name="gender" class="form-select"><option value="female">Female</option><option value="male">Male</option></select></div>
+                    <div class="col-6"><label class="small">Weight (kg)</label><input type="number" step="0.1" name="weight" class="form-control" required></div>
+                    <div class="col-6"><label class="small">Height (cm)</label><input type="number" name="height" class="form-control" required></div>
+                    <div class="col-12"><label class="small">Goal</label><select name="goal" class="form-select"><option value="maintain">Health Maintenance</option><option value="lose">Weight Loss</option><option value="gain">Muscle Gain</option></select></div>
+                </div>
+                {% else %}
+                <div class="p-3 bg-light rounded-3">
+                    <p class="mb-1"><strong>Weight:</strong> {{ profile.weight }}kg | <strong>Goal:</strong> {{ profile.goal }}</p>
+                    <p class="mb-0 small text-muted">Profile saved! Log your meals below.</p>
+                    <!-- 关键：在 POST 时保留 profile 信息 -->
+                    <input type="hidden" name="age" value="{{ profile.age }}">
+                    <input type="hidden" name="weight" value="{{ profile.weight }}">
+                    <input type="hidden" name="height" value="{{ profile.height }}">
+                    <input type="hidden" name="gender" value="{{ profile.gender }}">
+                    <input type="hidden" name="goal" value="{{ profile.goal }}">
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. Meals -->
+        <div class="col-lg-4">
+            <div class="card p-4 h-100">
+                <h5 class="fw-bold mb-4">2. Daily Meal Log</h5>
+                <div class="mb-3"><label class="fw-bold small text-success">Breakfast</label><textarea name="breakfast_input" class="form-control border-0 bg-light" rows="2" placeholder="e.g. oats:50, milk:200"></textarea></div>
+                <div class="mb-3"><label class="fw-bold small text-success">Lunch</label><textarea name="lunch_input" class="form-control border-0 bg-light" rows="2" placeholder="rice:150, chicken breast:150"></textarea></div>
+                <div class="mb-3"><label class="fw-bold small text-success">Dinner</label><textarea name="dinner_input" class="form-control border-0 bg-light" rows="2" placeholder="tofu:100, broccoli:200"></textarea></div>
+                <div class="mb-4"><label class="fw-bold small text-success">Snacks</label><textarea name="snacks_input" class="form-control border-0 bg-light" rows="2" placeholder="apple:150"></textarea></div>
+                <button type="submit" class="btn-main w-100 shadow">Generate Daily Report</button>
+            </div>
+        </div>
+
+        <!-- 3. Result -->
+        <div class="col-lg-4">
+            {% if analysis %}
+            <div class="card p-4">
+                <div class="warm-box mb-4">"{{ analysis.warm }}"</div>
+                <div class="d-flex justify-content-between">
+                    <h5 class="fw-bold text-success">Dashboard</h5>
+                    <span class="badge bg-secondary rounded-pill">BMI: {{ analysis.bmi }}</span>
+                </div>
+                <div class="text-center my-4">
+                    <div class="stat-val">{{ analysis.total_cal }}</div>
+                    <p class="text-muted small">Calories In / Target: {{ analysis.target }}</p>
+                    <div class="progress mb-2"><div class="progress-bar" style="width: {{ analysis.percent }}%; background: var(--sage)"></div></div>
+                    <span class="small fw-bold">{{ analysis.percent }}% of Daily Goal</span>
+                </div>
+                <div class="alert alert-light border small text-center">
+                    <strong>P:</strong> {{ analysis.pro }}g | <strong>F:</strong> {{ analysis.fat }}g | <strong>C:</strong> {{ analysis.carb }}g<br>
+                    <hr class="my-1">
+                    <strong>Fiber:</strong> {{ analysis.fiber }}g | <strong>Sugar:</strong> {{ analysis.sugar }}g
+                </div>
+                <div class="text-center mt-3"><div class="score-label small fw-bold">Health Score: {{ analysis.score }}/100</div></div>
+            </div>
+            {% else %}
+            <div class="card h-100 d-flex flex-column justify-content-center align-items-center opacity-50 p-5 text-center">
+                <h5>Input your meals to see the scientific magic.</h5>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    </form>
+</div>
+</body>
+</html>
